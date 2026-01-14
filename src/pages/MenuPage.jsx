@@ -29,6 +29,7 @@ function MenuPage() {
         const items =
           section.items?.map((item, idx) => ({
             ...item,
+            section: section.section, // ✅ ADD THIS
             menuId: `${sectionId}::nogroup::${item.id || item.name || idx}`,
             price: Number(item.price || 0),
           })) || [];
@@ -42,6 +43,7 @@ function MenuPage() {
               items:
                 group.items?.map((item, idx) => ({
                   ...item,
+                  section: section.section, // ✅ ADD THIS
                   menuId: `${sectionId}::${groupId}::${
                     item.id || item.name || idx
                   }`,
