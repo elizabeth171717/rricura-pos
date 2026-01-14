@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { BACKEND_URL } from "../constants/constants";
-
+import { SIDE_SIZES } from "../constants/sideSizes";
 const CLIENT_ID = "universalmenu";
 
 function MenuPage() {
@@ -244,13 +244,18 @@ function MenuPage() {
                       <ItemGrid
                         items={selectedGroup.items}
                         addToCart={addToCart}
+                        sectionName={selectedSection.section}
                       />
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <ItemGrid items={selectedSection.items} addToCart={addToCart} />
+              <ItemGrid
+                items={selectedSection.items}
+                addToCart={addToCart}
+                sectionName={selectedSection.section}
+              />
             )}
           </>
         )}
@@ -276,7 +281,7 @@ function MenuPage() {
             <div key={row._id} className="order-row">
               <div>
                 <p>
-                  {row.name} × {row.quantity}
+                  ${row.price.toFixed(2)} · {row.name} × {row.quantity}
                 </p>
                 {row.note && <p>📝 {row.note}</p>}
               </div>
@@ -317,28 +322,64 @@ function MenuPage() {
       )}
     </div>
   );
-}
 
-/* ---------------- ITEM GRID ---------------- */
+  /* ---------------- ITEM GRID ---------------- */
+  function ItemGrid({ items, addToCart }) {
+    const [activeSide, setActiveSide] = useState(null);
 
-function ItemGrid({ items, addToCart }) {
-  return (
-    <div className="item-grid">
-      {items
-        .filter((i) => i.visible !== false && i.available !== false)
-        .map((item) => (
-          <button
-            key={item.menuId}
-            className="item-card"
-            onClick={() => addToCart(item)}
-          >
-            {item.image && <img src={item.image} alt={item.name} />}
-            <p>{item.name}</p>
-            <p>${item.price.toFixed(2)}</p>
-          </button>
-        ))}
-    </div>
-  );
+    // Detect sides ONLY
+    const isSides =
+      items?.length > 0 && items[0].section?.toLowerCase() === "sides";
+
+    return (
+      <div className="item-grid">
+        {items
+          .filter((i) => i.visible !== false && i.available !== false)
+          .map((item) => (
+            <div key={item.menuId}>
+              {/* NORMAL ITEMS */}
+              <button
+                className="item-card"
+                onClick={() => {
+                  if (isSides) {
+                    setActiveSide(item.menuId);
+                  } else {
+                    addToCart(item);
+                  }
+                }}
+              >
+                {item.image && <img src={item.image} alt={item.name} />}
+                <p>{item.name}</p>
+                {!isSides && <p>${item.price.toFixed(2)}</p>}
+              </button>
+
+              {/* SIDES SIZE PICKER (ONLY WHEN CLICKED) */}
+              {isSides && activeSide === item.menuId && (
+                <div className="side-sizes">
+                  {SIDE_SIZES.map((size) => (
+                    <button
+                      key={size.label}
+                      className="side-size-btn"
+                      onClick={() => {
+                        addToCart({
+                          ...item,
+                          menuId: `${item.menuId}-${size.label}`,
+                          name: `${item.name} (${size.label})`,
+                          price: size.price,
+                        });
+                        setActiveSide(null);
+                      }}
+                    >
+                      {size.label} – ${size.price.toFixed(2)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+      </div>
+    );
+  }
 }
 
 export default MenuPage;
